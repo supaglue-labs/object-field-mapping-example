@@ -324,14 +324,10 @@ const transformedSyncedData = inngest.createFunction(
       }
 
       const uniqueOriginalOpportunityIds = [
-        ...new Set(
-          relationships.map((r) => r.originalOpportunityId)
-        )
+        ...new Set(relationships.map((r) => r.originalOpportunityId)),
       ];
       const uniqueOriginalContactIds = [
-        ...new Set(
-          relationships.map((r) => r.originalContactId)
-        )
+        ...new Set(relationships.map((r) => r.originalContactId)),
       ];
 
       const opportunities = await prisma.opportunity.findMany({
@@ -345,7 +341,7 @@ const transformedSyncedData = inngest.createFunction(
         select: {
           id: true,
           originalId: true,
-        }
+        },
       });
       const contacts = await prisma.contact.findMany({
         where: {
@@ -358,7 +354,7 @@ const transformedSyncedData = inngest.createFunction(
         select: {
           id: true,
           originalId: true,
-        }
+        },
       });
 
       const opportunityIdByOriginalId = new Map<string, string>();
@@ -369,10 +365,14 @@ const transformedSyncedData = inngest.createFunction(
       for (const contact of contacts) {
         contactIdByOriginalId.set(contact.originalId, contact.id);
       }
-      
+
       for (const relationship of relationships) {
-        const opportunityId = opportunityIdByOriginalId.get(relationship.originalOpportunityId);
-        const contactId = contactIdByOriginalId.get(relationship.originalContactId);
+        const opportunityId = opportunityIdByOriginalId.get(
+          relationship.originalOpportunityId
+        );
+        const contactId = contactIdByOriginalId.get(
+          relationship.originalContactId
+        );
         await prisma.opportunityToContact.update({
           where: {
             id: relationship.id,
@@ -380,7 +380,7 @@ const transformedSyncedData = inngest.createFunction(
           data: {
             opportunityId: opportunityId ?? undefined,
             contactId: contactId ?? undefined,
-          }
+          },
         });
       }
     });
