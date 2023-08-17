@@ -301,9 +301,9 @@ const transformedSyncedData = inngest.createFunction(
             {
               providerName: data.provider_name,
               customerId: data.customer_id,
-              lastModifiedAt: {
-                gt: lastMaxModifiedAt,
-              },
+              // lastModifiedAt: {
+              //   gt: lastMaxModifiedAt,
+              // },
             },
             {
               OR: [
