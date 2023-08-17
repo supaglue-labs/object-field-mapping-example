@@ -22,16 +22,50 @@ model SyncState {
 }
 
 model Opportunity {
-  id             String   @id @default(cuid())
-  providerName   String
-  customerId     String
-  originalId     String
-  name           String?
-  amount         Int?
-  lastModifiedAt DateTime
+  id                   String                 @id @default(cuid())
+  providerName         String
+  customerId           String
+  originalId           String
+  name                 String?
+  amount               Int?
+  lastModifiedAt       DateTime
+  OpportunityToContact OpportunityToContact[]
 
   @@unique([providerName, customerId, originalId])
   @@map("opportunities")
+}
+
+model Contact {
+  id                   String                 @id @default(cuid())
+  providerName         String
+  customerId           String
+  originalId           String
+  firstName            String?
+  lastName             String?
+  email                String?
+  phone                String?
+  lastModifiedAt       DateTime
+  OpportunityToContact OpportunityToContact[]
+
+  @@unique([providerName, customerId, originalId])
+  @@map("contacts")
+}
+
+model OpportunityToContact {
+  id                    String       @id @default(cuid())
+  providerName          String
+  customerId            String
+  originalOpportunityId String
+  originalContactId     String
+  opportunityId         String?
+  opportunity           Opportunity? @relation(fields: [opportunityId], references: [id])
+  contactId             String?
+  contact               Contact?     @relation(fields: [contactId], references: [id])
+  lastModifiedAt        DateTime
+
+  @@unique([providerName, customerId, originalOpportunityId, originalContactId])
+  @@unique([opportunityId, contactId])
+  @@map("opportunity_to_contact_links")
 }
 
 model SupaglueHubSpotDeal {
@@ -47,4 +81,19 @@ model SupaglueHubSpotDeal {
 
   @@id([supaglue_application_id, supaglue_provider_name, supaglue_customer_id, supaglue_id])
   @@map("hubspot_deal")
+}
+
+model SupaglueHubSpotContact {
+  supaglue_application_id   String   @map("_supaglue_application_id")
+  supaglue_provider_name    String   @map("_supaglue_provider_name")
+  supaglue_customer_id      String   @map("_supaglue_customer_id")
+  supaglue_id               String   @map("_supaglue_id")
+  supaglue_emitted_at       DateTime @map("_supaglue_emitted_at")
+  supaglue_last_modified_at DateTime @map("_supaglue_last_modified_at")
+  supaglue_is_deleted       Boolean  @map("_supaglue_is_deleted")
+  supaglue_raw_data         Json     @map("_supaglue_raw_data")
+  supaglue_mapped_data      Json     @map("_supaglue_mapped_data")
+
+  @@id([supaglue_application_id, supaglue_provider_name, supaglue_customer_id, supaglue_id])
+  @@map("hubspot_contact")
 }

@@ -1,0 +1,15 @@
+{
+  "name": "supaglue/sync.complete",
+  "data": {
+    "webhook_event_type": "sync.complete",
+    "run_id": "88a066b0-604e-4768-a650-da0413d57cce",
+    "connection_id": "21142081-9a9b-4582-9f76-4ce28c010956",
+    "customer_id": "albert-test-15",
+    "provider_name": "hubspot",
+    "result": "SUCCESS",
+    "num_records_synced": 4,
+    "type": "object",
+    "object_type": "standard",
+    "object": "deal"
+  }
+}
