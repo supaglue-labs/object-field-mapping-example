@@ -34,6 +34,9 @@ const transformedSyncedData = inngest.createFunction(
   { name: "Transform data from Supaglue" },
   { event: "supaglue/sync.complete" },
   async ({ event, step }) => {
+    // TODO: need to have something in place to make sure that at most
+    // one of these handlers is running at a time for a given provider/customer.
+
     // Treat as SyncComplete event
     const data = event.data as SyncComplete;
 
