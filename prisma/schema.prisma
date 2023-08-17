@@ -22,30 +22,30 @@ model SyncState {
 }
 
 model Opportunity {
-  id                   String                 @id @default(cuid())
-  providerName         String
-  customerId           String
-  originalId           String
-  name                 String?
-  amount               Int?
-  lastModifiedAt       DateTime
-  OpportunityToContact OpportunityToContact[]
+  id                        String                 @id @default(cuid())
+  providerName              String
+  customerId                String
+  originalId                String
+  name                      String?
+  amount                    Int?
+  lastModifiedAt            DateTime
+  opportunityToContactLinks OpportunityToContact[]
 
   @@unique([providerName, customerId, originalId])
   @@map("opportunities")
 }
 
 model Contact {
-  id                   String                 @id @default(cuid())
-  providerName         String
-  customerId           String
-  originalId           String
-  firstName            String?
-  lastName             String?
-  email                String?
-  phone                String?
-  lastModifiedAt       DateTime
-  OpportunityToContact OpportunityToContact[]
+  id                        String                 @id @default(cuid())
+  providerName              String
+  customerId                String
+  originalId                String
+  firstName                 String?
+  lastName                  String?
+  email                     String?
+  phone                     String?
+  lastModifiedAt            DateTime
+  opportunityToContactLinks OpportunityToContact[]
 
   @@unique([providerName, customerId, originalId])
   @@map("contacts")
