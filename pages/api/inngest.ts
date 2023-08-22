@@ -1,7 +1,8 @@
 import { Inngest } from "inngest";
 import { serve } from "inngest/next";
 import { getMapper } from "../../lib/mappers";
-import prisma from "../../lib/prisma";
+import prismaApp from "../../lib/prisma_app";
+import prismaSupaglue from "../../lib/prisma_supaglue";
 
 type BaseSyncComplete = {
   webhook_event_type: string;
@@ -68,7 +69,7 @@ const transformedSyncedData = inngest.createFunction(
     const lastMaxLastModifiedAtMs = await step.run(
       "Get high watermark",
       async () => {
-        const state = await prisma.syncState.findUnique({
+        const state = await prismaApp.syncState.findUnique({
           where: {
             providerName_customerId_object: {
               providerName: data.provider_name,
@@ -107,11 +108,15 @@ const transformedSyncedData = inngest.createFunction(
             case "salesforce": {
               switch (object) {
                 case "Contact":
-                  return prisma.supaglueSalesforceContact.findMany(params);
+                  return prismaSupaglue.supaglueSalesforceContact.findMany(
+                    params
+                  );
                 case "Lead":
-                  return prisma.supaglueSalesforceLead.findMany(params);
+                  return prismaSupaglue.supaglueSalesforceLead.findMany(params);
                 case "Opportunity":
-                  return prisma.supaglueSalesforceOpportunity.findMany(params);
+                  return prismaSupaglue.supaglueSalesforceOpportunity.findMany(
+                    params
+                  );
                 default:
                   throw new Error(`Unsupported Salesforce object: ${object}`);
               }
@@ -119,9 +124,9 @@ const transformedSyncedData = inngest.createFunction(
             case "hubspot": {
               switch (object) {
                 case "contact":
-                  return prisma.supaglueHubSpotContact.findMany(params);
+                  return prismaSupaglue.supaglueHubSpotContact.findMany(params);
                 case "deal":
-                  return prisma.supaglueHubSpotDeal.findMany(params);
+                  return prismaSupaglue.supaglueHubSpotDeal.findMany(params);
                 default:
                   throw new Error(`Unsupported HubSpot object: ${object}`);
               }
@@ -161,10 +166,10 @@ const transformedSyncedData = inngest.createFunction(
 
             switch (mapper.entityName) {
               case "contact":
-                await prisma.contact.deleteMany(params);
+                await prismaApp.contact.deleteMany(params);
                 break;
               case "opportunity":
-                await prisma.opportunity.deleteMany(params);
+                await prismaApp.opportunity.deleteMany(params);
                 break;
             }
           } else {
@@ -180,7 +185,7 @@ const transformedSyncedData = inngest.createFunction(
                   originalId: record.supaglue_id,
                   ...mappedRecord,
                 };
-                await prisma.contact.upsert({
+                await prismaApp.contact.upsert({
                   create: decoratedData,
                   update: decoratedData,
                   where: {
@@ -203,7 +208,7 @@ const transformedSyncedData = inngest.createFunction(
                   originalId: record.supaglue_id,
                   ...mappedRecord,
                 };
-                await prisma.opportunity.upsert({
+                await prismaApp.opportunity.upsert({
                   create: decoratedData,
                   update: decoratedData,
                   where: {
@@ -235,7 +240,7 @@ const transformedSyncedData = inngest.createFunction(
             ? new Date(newMaxLastModifiedAtMs)
             : undefined,
         };
-        await prisma.syncState.upsert({
+        await prismaApp.syncState.upsert({
           create: state,
           update: state,
           where: {

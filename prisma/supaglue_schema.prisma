@@ -1,47 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/supaglue_client"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
-}
-
-model SyncState {
-  id                String    @id @default(cuid())
-  providerName      String
-  customerId        String
-  object            String
-  maxLastModifiedAt DateTime?
-
-  @@unique([providerName, customerId, object])
-  @@map("sync_states")
-}
-
-model Opportunity {
-  id           String  @id @default(cuid())
-  providerName String
-  customerId   String
-  originalId   String
-  name         String?
-  description  String?
-  probability  Float?
-
-  @@unique([providerName, customerId, originalId])
-  @@map("opportunities")
-}
-
-model Contact {
-  id           String  @id @default(cuid())
-  providerName String
-  customerId   String
-  originalId   String
-  firstName    String?
-  lastName     String?
-
-  @@unique([providerName, customerId, originalId])
-  @@map("contacts")
+  provider = "postgresql"
+  url      = env("SUPAGLUE_POSTGRES_PRISMA_URL")
 }
 
 model SupaglueHubSpotDeal {

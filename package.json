@@ -6,7 +6,10 @@
     "dev": "next",
     "build": "next build",
     "start": "next start",
-    "postinstall": "prisma generate"
+    "postinstall": "npm run prisma_generate",
+    "prisma_generate": "prisma generate --schema prisma/app_schema.prisma && prisma generate --schema prisma/supaglue_schema.prisma",
+    "prisma_app_db_push": "prisma db push --schema prisma/app_schema.prisma",
+    "prisma_supaglue_db_pull": "prisma db pull --schema prisma/supaglue_schema.prisma"
   },
   "keywords": [],
   "author": "",
