@@ -86,126 +86,143 @@ const transformedSyncedData = inngest.createFunction(
       ? new Date(lastMaxLastModifiedAtMs)
       : undefined;
 
-    const newMaxLastModifiedAtMs = await step.run("Update records", async () => {
-      async function getSupaglueRecords(providerName: string, object: string) {
-        const params = {
-          where: {
-            supaglue_provider_name: data.provider_name,
-            supaglue_customer_id: data.customer_id,
-            supaglue_last_modified_at: {
-              gt: lastMaxModifiedAt,
-            },
-          },
-        };
-
-        switch (providerName) {
-          case "salesforce": {
-            switch (object) {
-              case "Contact":
-                return prisma.supaglueSalesforceContact.findMany(params);
-              case "Lead":
-                return prisma.supaglueSalesforceLead.findMany(params);
-              case "Opportunity":
-                return prisma.supaglueSalesforceOpportunity.findMany(params);
-              default:
-                throw new Error(`Unsupported Salesforce object: ${object}`);
-            }
-          }
-          case "hubspot": {
-            switch (object) {
-              case "contact":
-                return prisma.supaglueHubSpotContact.findMany(params);
-              case "deal":
-                return prisma.supaglueHubSpotDeal.findMany(params);
-              default:
-                throw new Error(`Unsupported HubSpot object: ${object}`);
-            }
-          }
-          default:
-            throw new Error(`Unsupported provider: ${providerName}`);
-        }
-      }
-
-      // Read from staging table
-      const records = await getSupaglueRecords(data.provider_name, data.object);
-      if (!records.length) {
-        return undefined;
-      }
-
-      let maxLastModifiedAtMs = 0;
-
-      // TODO: don't iterate one by one
-      for (const record of records) {
-        const lastModifiedAtMs = record.supaglue_last_modified_at.getTime();
-        if (lastModifiedAtMs > maxLastModifiedAtMs) {
-          maxLastModifiedAtMs = lastModifiedAtMs;
-        }
-
-        if (record.supaglue_is_deleted) {
-          // Delete
+    const newMaxLastModifiedAtMs = await step.run(
+      "Update records",
+      async () => {
+        async function getSupaglueRecords(
+          providerName: string,
+          object: string
+        ) {
           const params = {
             where: {
-              providerName: data.provider_name,
-              customerId: data.customer_id,
-              originalId: record.supaglue_id,
+              supaglue_provider_name: data.provider_name,
+              supaglue_customer_id: data.customer_id,
+              supaglue_last_modified_at: {
+                gt: lastMaxModifiedAt,
+              },
             },
-          }
-  
-          switch (mapper.entityName) {
-            case 'contact':
-              await prisma.contact.deleteMany(params);
-            case 'opportunity':
-              await prisma.opportunity.deleteMany(params);
-          }
-        } else {
-          // Upsert
-          switch (mapper.entityName) {
-            case 'contact': {
-              const mappedRecord = mapper.mappingFn(record);
-              const decoratedData = {
-                providerName: data.provider_name,
-                customerId: data.customer_id,
-                originalId: record.supaglue_id,
-                ...mappedRecord,
-              };
-              await prisma.contact.upsert({
-                create: decoratedData,
-                update: decoratedData,
-                where: {
-                  providerName_customerId_originalId: {
-                    providerName: data.provider_name,
-                    customerId: data.customer_id,
-                    originalId: record.supaglue_id,
-                  }
-                }
-              })
+          };
+
+          switch (providerName) {
+            case "salesforce": {
+              switch (object) {
+                case "Contact":
+                  return prisma.supaglueSalesforceContact.findMany(params);
+                case "Lead":
+                  return prisma.supaglueSalesforceLead.findMany(params);
+                case "Opportunity":
+                  return prisma.supaglueSalesforceOpportunity.findMany(params);
+                default:
+                  throw new Error(`Unsupported Salesforce object: ${object}`);
+              }
             }
-            case 'opportunity': {
-              const mappedRecord = mapper.mappingFn(record);
-              const decoratedData = {
+            case "hubspot": {
+              switch (object) {
+                case "contact":
+                  return prisma.supaglueHubSpotContact.findMany(params);
+                case "deal":
+                  return prisma.supaglueHubSpotDeal.findMany(params);
+                default:
+                  throw new Error(`Unsupported HubSpot object: ${object}`);
+              }
+            }
+            default:
+              throw new Error(`Unsupported provider: ${providerName}`);
+          }
+        }
+
+        // Read from staging table
+        const records = await getSupaglueRecords(
+          data.provider_name,
+          data.object
+        );
+        if (!records.length) {
+          return undefined;
+        }
+
+        let maxLastModifiedAtMs = 0;
+
+        // TODO: don't iterate one by one
+        for (const record of records) {
+          const lastModifiedAtMs = record.supaglue_last_modified_at.getTime();
+          if (lastModifiedAtMs > maxLastModifiedAtMs) {
+            maxLastModifiedAtMs = lastModifiedAtMs;
+          }
+
+          if (record.supaglue_is_deleted) {
+            // Delete
+            const params = {
+              where: {
                 providerName: data.provider_name,
                 customerId: data.customer_id,
                 originalId: record.supaglue_id,
-                ...mappedRecord,
-              };
-              await prisma.opportunity.upsert({
-                create: decoratedData,
-                update: decoratedData,
-                where: {
-                  providerName_customerId_originalId: {
-                    providerName: data.provider_name,
-                    customerId: data.customer_id,
-                    originalId: record.supaglue_id,
-                  }
-                }
-              })
+              },
+            };
+
+            switch (mapper.entityName) {
+              case "contact":
+                await prisma.contact.deleteMany(params);
+                break;
+              case "opportunity":
+                await prisma.opportunity.deleteMany(params);
+                break;
+            }
+          } else {
+            // Upsert
+            switch (mapper.entityName) {
+              case "contact": {
+                const mappedRecord = mapper.mappingFn(
+                  record.supaglue_mapped_data as Record<string, unknown>
+                );
+                const decoratedData = {
+                  providerName: data.provider_name,
+                  customerId: data.customer_id,
+                  originalId: record.supaglue_id,
+                  ...mappedRecord,
+                };
+                await prisma.contact.upsert({
+                  create: decoratedData,
+                  update: decoratedData,
+                  where: {
+                    providerName_customerId_originalId: {
+                      providerName: data.provider_name,
+                      customerId: data.customer_id,
+                      originalId: record.supaglue_id,
+                    },
+                  },
+                });
+                break;
+              }
+              case "opportunity": {
+                const mappedRecord = mapper.mappingFn(
+                  record.supaglue_mapped_data as Record<string, unknown>
+                );
+                const decoratedData = {
+                  providerName: data.provider_name,
+                  customerId: data.customer_id,
+                  originalId: record.supaglue_id,
+                  ...mappedRecord,
+                };
+                await prisma.opportunity.upsert({
+                  create: decoratedData,
+                  update: decoratedData,
+                  where: {
+                    providerName_customerId_originalId: {
+                      providerName: data.provider_name,
+                      customerId: data.customer_id,
+                      originalId: record.supaglue_id,
+                    },
+                  },
+                });
+                break;
+              }
             }
           }
         }
 
         return maxLastModifiedAtMs;
       }
-    });
+    );
 
     // record the high watermark seen
     if (newMaxLastModifiedAtMs) {

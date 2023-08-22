@@ -75,9 +75,9 @@ const user3: UserConfig = {
 }
 
 const userConfigs: Record<string, UserConfig> = {
-  user1,
-  user2,
-  user3,
+  'user-1': user1,
+  'user-2': user2,
+  'user-3': user3,
 };
 
 export const getMapper = (
